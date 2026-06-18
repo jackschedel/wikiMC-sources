@@ -63,11 +63,12 @@ export default [
 
 ### 2. Export Item Icons
 
-Run the modpack locally on your computer, using a mod to export all block and item previews. I recommend [BlockExporter](https://github.com/KazuOfficial/blockexporter) — I personally made the 1.20.1 Forge release version specifically for this wiki project.
+Run the modpack locally on your computer, using a mod to export all block and item previews. I recommend [BlockExporter](https://github.com/KazuOfficial/blockexporter) — I personally made the 1.20.1 Forge release version specifically for this wiki project. This will automatically use the correct filename standard. 
 
 Requirements:
 - **Format:** PNG
 - **Resolution:** 256×256
+- **Filename:** Same as item id in game, replacing `:` with `_`.
 
 Add the exported icons to the `item_icons/` folder.
 
