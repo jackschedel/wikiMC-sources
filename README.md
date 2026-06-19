@@ -23,7 +23,7 @@ Currently, this repository is composed of three things:
 
 - **`quest-sources.config.mjs`** - Defines where to find the FTB Quests files for each modpack in the wiki.
 - **`item_icons/`** - Contains the preview PNGs for every block and item in every modpack on the wiki.
-- **`recipe_data/`** - Contains the recipe data for all recipes in the pack, (currently not used)
+- **`recipe_data/`** - Contains the recipe data for all recipes in the pack (currently not used).
 
 > [!NOTE]
 > Any item icons with `/` in the Minecraft item ID will appear in a subfolder. Because this folder is not per-modpack, it is possible that there will be conflicts between items/blocks of the same name (either for different versions of the mod or for something generic like `kubejs:coin`). If this becomes an issue, I can add support for per-modpack image overrides as well.
