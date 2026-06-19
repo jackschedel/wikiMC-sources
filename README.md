@@ -19,10 +19,11 @@
 
 ## Repository Contents
 
-Currently, this repository is composed of three things:
+Currently, this repository is composed of four things:
 
 - **`quest-sources.config.mjs`** - Defines where to find the FTB Quests files for each modpack in the wiki.
 - **`item_icons/`** - Contains the preview PNGs for every block and item in every modpack on the wiki.
+- **`item_names/`** - Contains JSON mappings of item IDs to their display names for each modpack (e.g., `Monifactory.json`).
 - **`recipe_data/`** - Contains the recipe data for all recipes in the pack (currently not used).
 
 > [!NOTE]
@@ -73,7 +74,29 @@ Requirements:
 
 Add the exported icons to the `item_icons/` folder.
 
-### 3. Export Recipe Data
+### 3. Export Item Names
+Export all item display names as a JSON mapping. If using KubeJS, the following script can be added to the end of any file in `.minecraft/kubejs/server_scripts`:
+```js
+// priority: -10000
+ServerEvents.recipes(event => {
+    let names = {}
+    Item.getTypeList().forEach(id => {
+        try {
+            let stack = Item.of(id)
+            names[id.toString()] = stack.getHoverName().getString()
+        } catch (e) {
+            // skip items that need NBT context for their name
+        }
+    })
+    JsonIO.write('local/item_names.json', names)
+})
+```
+
+This will create the file `.minecraft/local/item_names.json` when loading a singleplayer world.
+
+Add the exported names to the `item_names/` folder, naming it `{modpack name}.json`.
+
+### 4. Export Recipe Data
 Export all recipe data as JSON. If using KubeJS, the following script can be added to the end of any file in `.minecraft/kubejs/server_scripts`:
 ```js
 // priority: -10000
@@ -83,15 +106,15 @@ ServerEvents.recipes(event => {
         recipes.push(JSON.parse(r.json.toString()))
     })
 
-    JsonIO.write('local/exported_recipes.json', { recipes: recipes })
+    JsonIO.write('local/recipe_data.json', { recipes: recipes })
 })
 ```
 
-This will create the file `.minecraft/local/exported_recipes.json` when loading a singleplayer world.
+This will create the file `.minecraft/local/recipe_data.json` when loading a singleplayer world.
 
-Add the exported recipes to the `recipe_data` folder, renaming `exported_recipes.json` to `{modpack name}.json`
+Add the exported recipes to the `recipe_data` folder, renaming `recipe_data.json` to `{modpack name}.json`.
 
-### 4. Create a Pull Request
+### 5. Create a Pull Request
 
 Submit a Pull Request with your changes.
 
