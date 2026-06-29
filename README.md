@@ -84,6 +84,7 @@ This will create the files:
 Add the `item_names.json` file to the `item_names/` folder, naming it `{modpack name}.json`.
 Add the `recipe_data.json` file to the `recipe_data/` folder, naming it `{modpack name}.json`.
 Add the `item_tags.json` file to the `item_tags/` folder, naming it `{modpack name}.json`.
+Add the `fluid_tags.json` file to the `fluid_tags/` folder, naming it `{modpack name}.json`.
 
 ### 5. Create a Pull Request
 
