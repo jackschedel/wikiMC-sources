@@ -26,6 +26,9 @@ function mergeModpackData(updates) {
 // and throws "redeclaration of var".
 const $BuiltInRegistries = Java.loadClass('net.minecraft.core.registries.BuiltInRegistries')
 const $ArrayList = Java.loadClass('java.util.ArrayList')
+// Used to give script-added recipes a fresh JSON object before serialization
+// (their `json` field is null until KubeJS's registration pass runs).
+const $JsonObject = Java.loadClass('com.google.gson.JsonObject')
 
 // Base name for every registered item id. We enumerate ids straight from the
 // ITEM registry (the same source the tag export uses, which is why tags work)
@@ -98,6 +101,50 @@ function buildTags() {
     }
 }
 
+// Determine the real recipe type id for a freshly-added recipe, whose own `type`
+// field serializes as the placeholder "unknown" at this stage. Shaped/shapeless
+// crafting are unambiguous from the serialized structure, so we read them
+// directly (this reliably covers crafting-table recipes like the Iron Jetpacks
+// tiers). Anything else falls back to the built recipe's serializer id, which
+// matches the datapack `type` convention (e.g. "gtceu:assembly_line"). Returns
+// null when the type can't be determined, leaving the existing value untouched.
+function resolveRecipeType(r) {
+    let j = r.json
+    if (j.has('pattern') && j.has('key')) {
+        return 'minecraft:crafting_shaped'
+    }
+    if (j.has('ingredients') && !j.has('pattern')) {
+        return 'minecraft:crafting_shapeless'
+    }
+    // The recipe's own type id, when KubeJS has resolved it. This is the case for
+    // typed builders like `event.recipes.gtceu.<machine>(...)` (giving e.g.
+    // "gtceu:macerator"), but not for the generic `event.shaped()` shortcut, whose
+    // type stays the placeholder "unknown" -- hence the structural checks above.
+    try {
+        let t = r.getType()
+        if (t) {
+            let s = t.toString()
+            if (s && s.indexOf('unknown') < 0) {
+                return s
+            }
+        }
+    } catch (ie) {
+        // No resolved type id; fall through.
+    }
+    try {
+        let orig = r.getOriginalRecipe()
+        if (orig) {
+            let key = $BuiltInRegistries.RECIPE_SERIALIZER.getKey(orig.getSerializer())
+            if (key) {
+                return key.toString()
+            }
+        }
+    } catch (te) {
+        // Built recipe unavailable; leave the type as-is.
+    }
+    return null
+}
+
 // Full export. Recipe JSON is only reachable through the recipes event, so this
 // runs the recipe export alongside the name/tag exports. Fires on world load
 // and on `/reload` (a datapack reload).
@@ -118,13 +165,54 @@ ServerEvents.recipes(event => {
 
     try {
         let recipes = []
-        event.forEachRecipe({}, r => {
+
+        // Serialize one recipe and append its JSON to the list.
+        //
+        // `originalRecipes` (loaded from datapacks) already carry a populated
+        // `json` field. Script-added recipes (`event.shaped`, `event.recipes.*`,
+        // etc.) are flagged `newRecipe` and only get serialized into `json`
+        // during KubeJS's post-event registration pass, which runs AFTER this
+        // handler. Until then their `json` is null, so we give them a fresh
+        // JsonObject and serialize now -- this populates their components (result,
+        // key, ingredients) including NBT outputs, e.g. the Iron Jetpacks tiers.
+        let collectRecipe = function (r) {
             try {
-                recipes.push(JSON.parse(r.json.toString()))
+                if (r.removed) return
+                if (r.newRecipe) {
+                    if (!r.json) {
+                        r.json = new $JsonObject()
+                    }
+                    r.serialize()
+                    // serialize() leaves `type` as the placeholder "unknown" for
+                    // freshly-added recipes (their RecipeTypeFunction isn't resolved
+                    // yet). Recover the real type so they group correctly in the
+                    // viewer instead of all landing under an "unknown" category.
+                    let typeId = resolveRecipeType(r)
+                    if (typeId) {
+                        r.json.addProperty('type', typeId)
+                    }
+                }
+                if (r.json) {
+                    recipes.push(JSON.parse(r.json.toString()))
+                }
             } catch (re) {
-                // Skip a single unserializable recipe rather than aborting the loop.
+                // Skip a single unserializable recipe rather than aborting.
             }
-        })
+        }
+
+        // forEachRecipe only streams `originalRecipes`; it never visits the
+        // separate `addedRecipes` collection, which is why every script-added
+        // recipe was missing from the export. Walk both sources.
+        event.forEachRecipe({}, function (r) { collectRecipe(r) })
+
+        let added = event.addedRecipes
+        if (added) {
+            let it = added.iterator()
+            while (it.hasNext()) {
+                collectRecipe(it.next())
+            }
+        }
+
         payload.recipe_data = { recipes: recipes }
     } catch (e) {
         console.error('[MODPACK EXPORT] recipe export failed: ' + e)
