@@ -86,6 +86,13 @@ Add the `recipe_data.json` file to the `recipe_data/` folder, naming it `{modpac
 Add the `item_tags.json` file to the `item_tags/` folder, naming it `{modpack name}.json`.
 Add the `fluid_tags.json` file to the `fluid_tags/` folder, naming it `{modpack name}.json`.
 
+### 4. Export Item and Recipe Data (Client)
+Copy the file `CLIENT_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/client_scripts` folder. Load a singleplayer world. Open the creative inventory, the run `/kubejs reload client_scripts`
+This will create the file:
+- `.minecraft/local/item_nbt.json`
+
+Add the `item_nbt.json` file to the `item_nbt/` folder, naming it `{modpack name}.json`.
+
 ### 5. Create a Pull Request
 
 Submit a Pull Request with your changes.

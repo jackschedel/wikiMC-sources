@@ -1,12 +1,16 @@
 // priority: -10000
 ServerEvents.recipes(event => {
+    // Base name for every registered item id. getTypeList() returns unique
+    // registry ids, so it covers items even if they're not in a creative tab.
+    // NBT-dependent names (potions, enchanted books, etc.) can't be seen here
+    // because the creative search tab isn't populated server-side; those are
+    // exported by client_scripts/CLIENT_export_modpack_data.js instead.
     let names = {}
     Item.getTypeList().forEach(id => {
         try {
-            let stack = Item.of(id)
-            names[id.toString()] = stack.getHoverName().getString()
+            names[id.toString()] = Item.of(id).getHoverName().getString()
         } catch (e) {
-            // skip items that need NBT context for their name
+            names[id.toString()] = id.toString()
         }
     })
     JsonIO.write('local/item_names.json', names)
