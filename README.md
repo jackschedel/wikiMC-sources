@@ -25,9 +25,6 @@ Currently, this repository is composed of four things:
 - **`item_icons/`** - Contains the preview PNGs for every block and item in every modpack on the wiki.
 - **`modpack_data/`** - Contains a single JSON file per modpack (e.g., `Monifactory.json`) holding the exported item names, recipe data, item/fluid tags, and NBT-dependent names under the keys `item_names`, `recipe_data`, `item_tags`, `fluid_tags`, and `item_nbt`.
 
-> [!NOTE]
-> Any item icons with `/` in the Minecraft item ID will appear in a subfolder. Because this folder is not per-modpack, it is possible that there will be conflicts between items/blocks of the same name (either for different versions of the mod or for something generic like `kubejs:coin`). If this becomes an issue, I can add support for per-modpack image overrides as well.
-
 The `item_icons` folder includes the item icon for **every** item in the pack, not just the ones needed to render the quest book. My hope is that these can be useful in the future, either for future wiki features, or just as a repository for other developers.
 
 ## Issues
@@ -64,7 +61,7 @@ export default [
 
 ### 2. Export Item Icons
 
-Run the modpack locally on your computer, using a mod to export all block and item previews. I recommend [BlockExporter](https://github.com/KazuOfficial/blockexporter) — I personally made the 1.20.1 Forge release version specifically for this wiki project. This will automatically use the correct filename standard. 
+Run the modpack locally on your computer, using a mod to export all block and item previews. For Forge 1.20.1, I recommend [BlockExporter](https://github.com/jackschedel/blockexporter-1.20.1/releases/tag/1.20.1-forge-v2) — I personally made this 1.20.1 Forge release version specifically for this wiki project. This will automatically use the correct filename standard.
 
 Requirements:
 - **Format:** PNG
@@ -72,6 +69,9 @@ Requirements:
 - **Filename:** Same as item id in game, replacing `:` with `_`.
 
 Add the exported icons to the `item_icons/` folder in the repository.
+
+> [!NOTE]
+> All fluids appear in a subfolder `fluids`, because their ids are not unique with items ids. Any item icons with `/` in the Minecraft item ID will appear in a subfolder. Because this folder is not per-modpack, it is possible that there will be conflicts between items/blocks of the same name (either for different versions of the mod or for something generic like `kubejs:coin`). If this becomes an issue, I can add support for per-modpack image overrides as well.
 
 ### 3. Export Item and Recipe Data
 
