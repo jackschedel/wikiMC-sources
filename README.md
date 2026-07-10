@@ -1,4 +1,4 @@
-<h1 align="center"><b>wikiMC.org Sources</b></h1>
+<h1 align="center"><b>wikiMC Sources</b></h1>
 
 <p align="center">
     <a href="https://wiki.koaladev.io" target="_blank"><img src="https://wikiMC.org/favicon.png" alt="wikiMC.org icon" width="100" /></a>
@@ -7,12 +7,12 @@
 <h4 align="center"><b>This is the public sources repository for https://wikiMC.org</b></h4>
 
 <p align="center">
-<a href="https://github.com/jackschedel/wikiMC.org-sources/issues" target="_blank">
-    <img src="https://img.shields.io/github/issues/jackschedel/wikiMC.org-sources?style=flat-square" alt="issues"/>
+<a href="https://github.com/jackschedel/wikiMC-sources/issues" target="_blank">
+    <img src="https://img.shields.io/github/issues/jackschedel/wikiMC-sources?style=flat-square" alt="issues"/>
 </a>
 
-<a href="https://github.com/jackschedel/wikiMC.org-sources/pulls" target="_blank">
-    <img src="https://img.shields.io/github/issues-pr/jackschedel/wikiMC.org-sources?style=flat-square" alt="pull-requests"/>
+<a href="https://github.com/jackschedel/wikiMC-sources/pulls" target="_blank">
+    <img src="https://img.shields.io/github/issues-pr/jackschedel/wikiMC-sources?style=flat-square" alt="pull-requests"/>
 </a>
 
 </p>
