@@ -252,7 +252,16 @@ function getRunningServer() {
 // script reload alone refreshes item_names/item_tags/fluid_tags without
 // rejoining. Recipe data still needs a datapack reload (`/reload`) to refresh,
 // since recipe JSON is only exposed through the recipes event.
-if (getRunningServer()) {
+//
+// This same registry read is ALSO the reliable source for tags: item/fluid tags
+// are only bound to BuiltInRegistries once the server has finished loading. The
+// ServerEvents.recipes handler above runs DURING the datapack reload -- before
+// tag binding -- so on a fresh world load it sees only the handful of
+// code-registered tags (all empty). ServerEvents.loaded fires after startup
+// completes, when tags are fully bound, so re-running the export there
+// overwrites those empty tags with the complete set. (recipe_data, written by
+// the recipes event, is preserved by the read-merge-write.)
+function exportRegistryData() {
     let payload = {}
     try {
         Object.assign(payload, buildItemNames())
@@ -265,4 +274,12 @@ if (getRunningServer()) {
         console.error('[MODPACK EXPORT] tag export failed: ' + e)
     }
     mergeModpackData(payload)
+}
+
+ServerEvents.loaded(event => {
+    exportRegistryData()
+})
+
+if (getRunningServer()) {
+    exportRegistryData()
 }
