@@ -25,7 +25,7 @@ Currently, this repository is composed of four things:
 - **`item_icons/`** - Contains the preview PNGs for every block and item in every modpack on the wiki.
 - **`modpack_data/`** - Contains a single JSON file per modpack (e.g., `Monifactory.json`) holding the exported item names, recipe data, item/fluid tags, and NBT-dependent names under the keys `item_names`, `recipe_data`, `item_tags`, `fluid_tags`, and `item_nbt`.
 
-The `item_icons` folder includes the item icon for **every** item in the pack, not just the ones needed to render the quest book. My hope is that these can be useful in the future, either for future wiki features, or just as a repository for other developers.
+The `item_icons` folder includes the item icon for **every** item in the pack, not just the ones with recipes or in the quest book. My hope is that these can be useful in the future, either for future wiki features, or just as a repository for other developers.
 
 ## Issues
 
@@ -38,25 +38,14 @@ Please create issues on this repo for any bugs/feature requests for [wikiMC.org]
 Add a new array element in `quest-sources.config.mjs` for the new modpack, following the format:
 
 ```js
-export default [
-  {
-    slug: "Monifactory",
-    repo: "ThePansmith/Monifactory",
-    branch: "main",
-    questsPaths: [
-      "config/ftbquests/quests",
-      "config-overrides/normal/ftbquests/quests",
-    ],
-    langDirs: ["kubejs/assets/ftbquests/lang"],
-  },
-  {
-    slug: "GregTech-Modern-Community-Pack",
-    repo: "GregTechCEu/GregTech-Modern-Community-Pack",
-    branch: "main",
-    questsPaths: ["config/ftbquests/quests"],
-    langDirs: ["kubejs/assets/gtceu/lang"],
-  },
-];
+{
+  slug: "GregTech-Modern-Community-Pack",
+  repo: "GregTechCEu/GregTech-Modern-Community-Pack",
+  branch: "main",
+  title: "GregTech Community Pack Modern",
+  questsPaths: ["config/ftbquests/quests"],
+  langDirs: ["kubejs/assets/gtceu/lang"],
+},
 ```
 
 ### 2. Export Item Icons
@@ -77,8 +66,8 @@ Add the exported icons to the `item_icons/` folder in the repository.
 
 Both export scripts write into the same file, `.minecraft/local/modpack_data.json`. Since the server and client scripts run separately, each one merges its keys into the file without overwriting the other's data.
 
-1. Copy `SERVER_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/server_scripts` folder. Load a singleplayer world. This writes the `item_names`, `recipe_data`, `item_tags`, and `fluid_tags` keys. (If the script is already in place while a world is loaded, you can re-export `item_names`/`item_tags`/`fluid_tags` with `/kubejs reload`)
-2. Copy `CLIENT_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/client_scripts` folder. With the world still loaded, open the creative inventory, then run `/kubejs reload client_scripts`. This adds the `item_nbt` key.
+1. Copy `SERVER_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/server_scripts` folder. Load a singleplayer world. This writes the `item_names`, `recipe_data`, `item_tags`, and `fluid_tags` keys.
+2. Copy `CLIENT_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/client_scripts` folder. **With the world still loaded, open the creative inventory, then run** `/kubejs reload client_scripts`. This adds the `item_nbt` key.
 
 Add the resulting `.minecraft/local/modpack_data.json` file to the `modpack_data/` folder in the repository, naming it `{modpack name}.json`.
 

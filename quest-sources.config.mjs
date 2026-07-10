@@ -32,6 +32,7 @@ export default [
     slug: "Monifactory-Hard",
     repo: "ThePansmith/Monifactory",
     branch: "main",
+    title: "Monifactory (Hard)",
     questsPaths: [
       "config/ftbquests/quests",
       "config-overrides/hardmode/ftbquests/quests",
@@ -58,6 +59,7 @@ export default [
     slug: "Monifactory-Expert",
     repo: "ThePansmith/Monifactory",
     branch: "main",
+    title: "Monifactory (Expert)",
     questsPaths: [
       "config/ftbquests/quests",
       "config-overrides/expert/ftbquests/quests",
@@ -78,6 +80,7 @@ export default [
     slug: "GregTech-Modern-Community-Pack",
     repo: "GregTechCEu/GregTech-Modern-Community-Pack",
     branch: "main",
+    title: "GregTech Community Pack Modern",
     questsPaths: ["config/ftbquests/quests"],
     langDirs: ["kubejs/assets/gtceu/lang"],
   },
