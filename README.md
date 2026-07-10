@@ -1,18 +1,18 @@
-<h1 align="center"><b>wiki.koaladev.io Sources</b></h1>
+<h1 align="center"><b>wikiMC.org Sources</b></h1>
 
 <p align="center">
-    <a href="https://wiki.koaladev.io" target="_blank"><img src="https://wiki.koaladev.io/favicon.png" alt="wiki.koaladev.io icon" width="100" /></a>
+    <a href="https://wiki.koaladev.io" target="_blank"><img src="https://wikiMC.org/favicon.png" alt="wikiMC.org icon" width="100" /></a>
 </p>
 
-<h4 align="center"><b>This is the public sources repository for https://wiki.koaladev.io.</b></h4>
+<h4 align="center"><b>This is the public sources repository for https://wikiMC.org</b></h4>
 
 <p align="center">
-<a href="https://github.com/jackschedel/wiki.koaladev.io-public/issues" target="_blank">
-    <img src="https://img.shields.io/github/issues/jackschedel/wiki.koaladev.io-public?style=flat-square" alt="issues"/>
+<a href="https://github.com/jackschedel/wikiMC.org-sources/issues" target="_blank">
+    <img src="https://img.shields.io/github/issues/jackschedel/wikiMC.org-sources?style=flat-square" alt="issues"/>
 </a>
 
-<a href="https://github.com/jackschedel/wiki.koaladev.io-public/pulls" target="_blank">
-    <img src="https://img.shields.io/github/issues-pr/jackschedel/wiki.koaladev.io-public?style=flat-square" alt="pull-requests"/>
+<a href="https://github.com/jackschedel/wikiMC.org-sources/pulls" target="_blank">
+    <img src="https://img.shields.io/github/issues-pr/jackschedel/wikiMC.org-sources?style=flat-square" alt="pull-requests"/>
 </a>
 
 </p>
@@ -29,7 +29,7 @@ The `item_icons` folder includes the item icon for **every** item in the pack, n
 
 ## Issues
 
-Please create issues on this repo for any bugs/feature requests for [wiki.koaladev.io](https://wiki.koaladev.io) as a whole, even though this repository is just for the sources.
+Please create issues on this repo for any bugs/feature requests for [wikiMC.org](https://wikiMC.org) as a whole, even though this repository is just for the sources.
 
 ## Adding a New Modpack
 
