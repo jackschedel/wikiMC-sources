@@ -6,11 +6,10 @@
 import fs from "node:fs";
 
 const REQUIRED_KEYS = [
-  "item_names",
+  "item_data",
+  "fluid_data",
+  "tag_data",
   "recipe_data",
-  "item_tags",
-  "fluid_tags",
-  "item_nbt",
 ];
 
 /**
