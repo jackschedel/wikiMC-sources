@@ -23,7 +23,7 @@ Currently, this repository is composed of three things:
 
 - **`quest-sources.config.mjs`** - Defines where to find the FTB Quests files for each modpack in the wiki.
 - **`item_icons/`** - Contains the preview PNGs for every block and item in every modpack on the wiki.
-- **`modpack_data/`** - Contains a single JSON file per modpack (e.g., `Monifactory.json`) holding the exported item names, recipe data, item/fluid tags, NBT-dependent names, and item tooltips/descriptions under the keys `item_names`, `recipe_data`, `item_tags`, `fluid_tags`, `item_nbt`, and `item_tooltips`.
+- **`modpack_data/`** - Contains a single JSON file per modpack (e.g., `Monifactory.json`) holding the exported item names, recipe data, item/fluid tags, NBT-dependent names, and item tooltips/descriptions.
 
 The `item_icons` folder includes the item icon for **every** item in the pack, not just the ones with recipes or in the quest book. My hope is that these can be useful in the future, either for future wiki features, or just as a repository for other developers.
 
@@ -66,9 +66,9 @@ Add the exported icons to the `item_icons/` folder in the repository.
 
 Both export scripts write into the same file, `.minecraft/local/modpack_data.json`. Since the server and client scripts run separately, each one merges its keys into the file without overwriting the other's data.
 
-1. Copy `SERVER_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/server_scripts` folder. Load a singleplayer world. This writes the `item_names`, `recipe_data`, `item_tags`, and `fluid_tags` keys.
-2. Copy `CLIENT_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/client_scripts` folder. **With the world still loaded, open the creative inventory once** (so the creative search tab is populated), **then run** `/kubejs reload client_scripts`. This adds the `item_nbt` and `item_tooltips` keys.
-   - Many mods hide the useful part of an item's tooltip behind a held key (e.g. GregTech coils: *"Hold SHIFT to show Coil Bonus Info"*; tag viewers: *"Hold CTRL to see tags"*). This content is only generated while the key is physically down, so to capture it, **hold `Shift` + `Ctrl` together while pressing Enter to submit the reload command** (on macOS use `Shift` + `Cmd` — Minecraft maps "control" to the Cmd key there). Holding both reveals every gated tier in the single `item_tooltips` capture. The KubeJS console logs `(captured with SHIFT+CTRL/Cmd held)` on success, or `(no modifier held ...)` if the hold didn't register.
+1. Copy `SERVER_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/server_scripts` folder. Load a singleplayer world.
+2. Copy `CLIENT_export_modpack_data.js` from the respository to your modpack instance's `.minecraft/kubejs/client_scripts` folder. **With the world still loaded, open the creative inventory once** (so the creative search tab is populated), **then run** `/kubejs reload client_scripts`, **holding Shift while pressing enter**.
+   - Many mods hide the useful part of an item's tooltip behind a held key (e.g. GregTech coils: *"Hold SHIFT to show Coil Bonus Info"*). This content is only generated while the key is physically down, so to capture it, **hold `Shift` while pressing Enter to submit the reload command**.
 
 Add the resulting `.minecraft/local/modpack_data.json` file to the `modpack_data/` folder in the repository, naming it `{modpack name}.json`.
 
