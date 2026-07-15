@@ -1,10 +1,55 @@
 // priority: -10000
 
 // Every export below writes into a single shared file, local/modpack_data.json,
-// storing its payload under a named key (item_names, recipe_data, item_tags,
-// fluid_tags). The client export adds its own key (item_nbt) to the same file.
-// Because the server and client scripts run separately, each write reads the
-// existing file first and merges, so neither side clobbers the other's keys.
+// storing its payload under one of four top-level keys: item_data, fluid_data,
+// tag_data, recipe_data. The client export contributes the per-variant names,
+// tooltips and source mod for item_data. Because the server and client scripts
+// run separately, each write reads the existing file first and merges, so
+// neither side clobbers the other's data.
+//
+// item_data / fluid_data are assembled from BOTH scripts (the server supplies
+// tags + base names; the client supplies per-NBT-variant names, tooltips and the
+// source mod), so those two keys are DEEP-merged per id and per variant rather
+// than replaced wholesale. Every other key (tag_data, recipe_data) is produced
+// by a single script and is replaced outright.
+
+// Merge one incoming entry into an existing one. Scalar fields are owned by
+// whichever script can see them (`mod` only the client, `tags` only the server),
+// so each is filled from incoming when provided. Variants are matched across
+// scripts by their NBT payload: the server seeds a single base variant (nbt
+// null) with the registry name; the client fills that variant's tooltip and
+// appends any NBT-distinct variants.
+function mergeEntry(target, incoming) {
+    if (incoming.mod !== undefined && incoming.mod !== null) target.mod = incoming.mod
+    if (incoming.tags !== undefined) target.tags = incoming.tags
+    if (incoming.variants && incoming.variants.length) {
+        if (!target.variants) target.variants = []
+        let index = {}
+        target.variants.forEach(v => {
+            index[JSON.stringify(v.nbt === undefined ? null : v.nbt)] = v
+        })
+        incoming.variants.forEach(iv => {
+            let sig = JSON.stringify(iv.nbt === undefined ? null : iv.nbt)
+            let tv = index[sig]
+            if (!tv) {
+                target.variants.push(iv)
+                index[sig] = iv
+            } else {
+                if ((tv.name === undefined || tv.name === null) && iv.name != null) tv.name = iv.name
+                if (tv.tooltip === undefined && iv.tooltip !== undefined) tv.tooltip = iv.tooltip
+            }
+        })
+    }
+}
+
+// Deep-merge a map of id -> entry (item_data / fluid_data) into another.
+function deepMergeDataMap(target, source) {
+    Object.keys(source).forEach(id => {
+        if (!target[id]) target[id] = source[id]
+        else mergeEntry(target[id], source[id])
+    })
+}
+
 function mergeModpackData(updates) {
     let existing = {}
     try {
@@ -17,7 +62,14 @@ function mergeModpackData(updates) {
     } catch (e) {
         existing = {}
     }
-    Object.keys(updates).forEach(k => existing[k] = updates[k])
+    Object.keys(updates).forEach(k => {
+        if (k === 'item_data' || k === 'fluid_data') {
+            if (!existing[k]) existing[k] = {}
+            deepMergeDataMap(existing[k], updates[k])
+        } else {
+            existing[k] = updates[k]
+        }
+    })
     JsonIO.write('local/modpack_data.json', existing)
 }
 
@@ -30,15 +82,17 @@ const $ArrayList = Java.loadClass('java.util.ArrayList')
 // (their `json` field is null until KubeJS's registration pass runs).
 const $JsonObject = Java.loadClass('com.google.gson.JsonObject')
 
-// Base name for every registered item id. We enumerate ids straight from the
-// ITEM registry (the same source the tag export uses, which is why tags work)
-// rather than the KubeJS Item.getTypeList() helper, which isn't available in
-// every KubeJS build and throws here -- previously aborting the whole export.
-// NBT-dependent names (potions, enchanted books, etc.) can't be seen here
-// because the creative search tab isn't populated server-side; those are
-// exported by client_scripts/CLIENT_export_modpack_data.js instead.
-function buildItemNames() {
-    let names = {}
+// Base item_data entry for every registered item id: its reverse tag list plus a
+// single base variant carrying the registry hover name (nbt null). The client
+// export deep-merges the per-variant tooltips/names and the source mod on top.
+// We enumerate ids straight from the ITEM registry (the same source the tag
+// export uses, which is why tags work) rather than the KubeJS Item.getTypeList()
+// helper, which isn't available in every KubeJS build and throws here --
+// previously aborting the whole export. NBT-dependent names (potions, enchanted
+// books, etc.) can't be seen here because the creative search tab isn't
+// populated server-side; the client export supplies those variants.
+function buildItemData(itemToTags) {
+    let data = {}
     let registry = $BuiltInRegistries.ITEM
     // Copy the key set into a public ArrayList; Rhino can't iterate the
     // registry's internal Set view directly (same reason collectTags does it).
@@ -46,13 +100,18 @@ function buildItemNames() {
     for (let i = 0; i < ids.size(); i++) {
         let id = ids.get(i)
         let key = id.toString()
+        let name
         try {
-            names[key] = Item.of(id).getHoverName().getString()
+            name = Item.of(id).getHoverName().getString()
         } catch (e) {
-            names[key] = key
+            name = key
+        }
+        data[key] = {
+            tags: itemToTags[key] || [],
+            variants: [{ name: name, nbt: null }]
         }
     }
-    return { item_names: names }
+    return { item_data: data }
 }
 
 function collectTags(registry) {
@@ -85,20 +144,37 @@ function collectTags(registry) {
     return { tagToEntries: tagToEntries, entryToTags: entryToTags }
 }
 
-function buildTags() {
+// Collect item and fluid tags once and shape them for the new format. The
+// forward maps (tag -> entries) live under the top-level tag_data key; the
+// reverse maps (entry -> tags) are returned separately so buildItemData /
+// buildFluidData can fold them into each entry's `tags` field.
+function buildTagData() {
     let items = collectTags($BuiltInRegistries.ITEM)
     let fluids = collectTags($BuiltInRegistries.FLUID)
 
     return {
-        item_tags: {
-            tag_to_items: items.tagToEntries,
-            item_to_tags: items.entryToTags
-        },
-        fluid_tags: {
-            tag_to_fluids: fluids.tagToEntries,
-            fluid_to_tags: fluids.entryToTags
+        itemToTags: items.entryToTags,
+        fluidToTags: fluids.entryToTags,
+        tagData: {
+            tags_to_items: items.tagToEntries,
+            tags_to_fluids: fluids.tagToEntries
         }
     }
+}
+
+// Base fluid_data entry for every fluid that carries at least one tag. Mirrors
+// the item_data shape so fluid names/tooltips can be deep-merged in later (from
+// a future client fluid export) with no structural change: `variants` is left
+// empty for now, since fluid names/tooltips aren't exported yet.
+function buildFluidData(fluidToTags) {
+    let data = {}
+    Object.keys(fluidToTags).forEach(id => {
+        data[id] = {
+            tags: fluidToTags[id],
+            variants: []
+        }
+    })
+    return { fluid_data: data }
 }
 
 // Determine the real recipe type id for a freshly-added recipe, whose own `type`
@@ -157,11 +233,29 @@ function resolveRecipeType(r) {
 ServerEvents.recipes(event => {
     let payload = {}
 
+    // Tags are built first: their reverse maps feed the `tags` field of every
+    // item_data / fluid_data entry, and the forward maps become tag_data. A
+    // failure in tag collection still leaves the base names intact (empty tags).
+    let tags = { itemToTags: {}, fluidToTags: {}, tagData: { tags_to_items: {}, tags_to_fluids: {} } }
     try {
-        Object.assign(payload, buildItemNames())
+        tags = buildTagData()
     } catch (e) {
-        console.error('[MODPACK EXPORT] item names failed: ' + e)
+        console.error('[MODPACK EXPORT] tag export failed: ' + e)
     }
+
+    try {
+        Object.assign(payload, buildItemData(tags.itemToTags))
+    } catch (e) {
+        console.error('[MODPACK EXPORT] item data failed: ' + e)
+    }
+
+    try {
+        Object.assign(payload, buildFluidData(tags.fluidToTags))
+    } catch (e) {
+        console.error('[MODPACK EXPORT] fluid data failed: ' + e)
+    }
+
+    payload.tag_data = tags.tagData
 
     try {
         let recipes = []
@@ -218,12 +312,6 @@ ServerEvents.recipes(event => {
         console.error('[MODPACK EXPORT] recipe export failed: ' + e)
     }
 
-    try {
-        Object.assign(payload, buildTags())
-    } catch (e) {
-        console.error('[MODPACK EXPORT] tag export failed: ' + e)
-    }
-
     mergeModpackData(payload)
 })
 
@@ -249,7 +337,7 @@ function getRunningServer() {
 // `/kubejs reload server_scripts` re-evaluates this file but does NOT fire
 // ServerEvents.recipes (it reloads scripts only, not datapacks/recipes). If a
 // server is already running, regenerate the registry-based exports now so a
-// script reload alone refreshes item_names/item_tags/fluid_tags without
+// script reload alone refreshes item_data/fluid_data/tag_data without
 // rejoining. Recipe data still needs a datapack reload (`/reload`) to refresh,
 // since recipe JSON is only exposed through the recipes event.
 //
@@ -263,16 +351,23 @@ function getRunningServer() {
 // the recipes event, is preserved by the read-merge-write.)
 function exportRegistryData() {
     let payload = {}
+    let tags = { itemToTags: {}, fluidToTags: {}, tagData: { tags_to_items: {}, tags_to_fluids: {} } }
     try {
-        Object.assign(payload, buildItemNames())
-    } catch (e) {
-        console.error('[MODPACK EXPORT] item names failed: ' + e)
-    }
-    try {
-        Object.assign(payload, buildTags())
+        tags = buildTagData()
     } catch (e) {
         console.error('[MODPACK EXPORT] tag export failed: ' + e)
     }
+    try {
+        Object.assign(payload, buildItemData(tags.itemToTags))
+    } catch (e) {
+        console.error('[MODPACK EXPORT] item data failed: ' + e)
+    }
+    try {
+        Object.assign(payload, buildFluidData(tags.fluidToTags))
+    } catch (e) {
+        console.error('[MODPACK EXPORT] fluid data failed: ' + e)
+    }
+    payload.tag_data = tags.tagData
     mergeModpackData(payload)
 }
 
