@@ -30,6 +30,7 @@ const TooltipFlagCls = Java.loadClass('net.minecraft.world.item.TooltipFlag')
 // live), so the export instead records WHICH modifier was held during the
 // reload and writes the expanded tooltip under a modifier-specific key.
 const ScreenCls = Java.loadClass('net.minecraft.client.gui.screens.Screen')
+const ExportArrayListCls = Java.loadClass('java.util.ArrayList')
 
 // The export below writes into the single shared file local/modpack_data.json,
 // contributing to the item_data key: the per-variant display names, tooltips and
@@ -317,15 +318,91 @@ function exportItemData() {
     return { item_data: result }
 }
 
+function exportEmiRecipeCatalysts() {
+    try {
+        let manager = Java.loadClass('dev.emi.emi.api.EmiApi').getRecipeManager()
+        let categories = new ExportArrayListCls(manager.getCategories())
+        if (categories.size() === 0) {
+            console.warn('[RECIPE CATALYST EXPORT] EMI has no categories; trying JEI')
+            return
+        }
+
+        let catalysts = {}
+        for (let index = 0; index < categories.size(); index++) {
+            let category = categories.get(index)
+            let id = category.getId().toString()
+            let workstations = new ExportArrayListCls(manager.getWorkstations(category))
+            let ids = []
+            for (let workstationIndex = 0; workstationIndex < workstations.size(); workstationIndex++) {
+                let stacks = new ExportArrayListCls(workstations.get(workstationIndex).getEmiStacks())
+                for (let stackIndex = 0; stackIndex < stacks.size(); stackIndex++) {
+                    let stack = stacks.get(stackIndex).getItemStack()
+                    if (stack.isEmpty()) continue
+                    let itemId = Item.getId(stack.getItem()).toString()
+                    if (ids.indexOf(itemId) < 0) ids.push(itemId)
+                }
+            }
+            catalysts[id] = ids
+        }
+
+        console.log('[RECIPE CATALYST EXPORT] ' + categories.size()
+            + ' EMI categories exported under recipe_catalysts')
+        return { recipe_catalysts: catalysts }
+    } catch (e) {
+        console.warn('[RECIPE CATALYST EXPORT] EMI unavailable; trying JEI: ' + e)
+    }
+}
+
+function exportRecipeCatalysts() {
+    let emiPayload = exportEmiRecipeCatalysts()
+    if (emiPayload) return emiPayload
+
+    try {
+        let runtime = Java.loadClass('mezz.jei.common.Internal').getJeiRuntime()
+        let manager = runtime.getRecipeManager()
+        let categories = new ExportArrayListCls(manager.createRecipeCategoryLookup()
+            .includeHidden().get().toList())
+        if (categories.size() === 0) {
+            console.warn('[RECIPE CATALYST EXPORT] JEI has no categories; skipping')
+            return
+        }
+
+        let catalysts = {}
+        for (let index = 0; index < categories.size(); index++) {
+            let category = categories.get(index)
+            let type = category.getRecipeType()
+            let id = type.getUid().toString()
+            let stacks = new ExportArrayListCls(manager.createRecipeCatalystLookup(type)
+                .includeHidden().getItemStack().toList())
+            let ids = []
+            for (let stackIndex = 0; stackIndex < stacks.size(); stackIndex++) {
+                let itemId = Item.getId(stacks.get(stackIndex).getItem()).toString()
+                if (ids.indexOf(itemId) < 0) ids.push(itemId)
+            }
+            catalysts[id] = ids
+        }
+
+        console.log('[RECIPE CATALYST EXPORT] ' + categories.size()
+            + ' JEI categories exported under recipe_catalysts')
+        return { recipe_catalysts: catalysts }
+    } catch (e) {
+        console.error('[RECIPE CATALYST EXPORT] skipped (JEI missing, not ready, or incompatible): ' + e)
+    }
+}
+
 // Runs only on `/kubejs reload client_scripts`, which re-evaluates this file.
 // We do NOT hook ClientEvents.loggedIn: the creative search tab is only
 // populated after the creative inventory has been opened at least once, so a
 // world-join export would see an empty tab. Open creative once, then reload.
 //
-// The single export merges into the shared local/modpack_data.json under
-// item_data; it returns undefined when it bails early (no world / empty search
-// tab), so guard before merging.
+// Merge item_data and recipe_catalysts in one write. Catalyst keys are viewer
+// category IDs, not necessarily server recipe JSON type IDs. Prefer EMI so its
+// native categories are included; fall back to JEI's internal 1.20.1 bridge.
+// Failure of both lookups preserves the previous catalyst export.
+// An empty creative tab skips item_data but does not block catalyst export.
 if (Client.player) {
-    let payload = exportItemData()
-    if (payload) mergeModpackData(payload)
+    let payload = exportItemData() || {}
+    let catalystsPayload = exportRecipeCatalysts()
+    if (catalystsPayload) Object.assign(payload, catalystsPayload)
+    if (Object.keys(payload).length) mergeModpackData(payload)
 }
