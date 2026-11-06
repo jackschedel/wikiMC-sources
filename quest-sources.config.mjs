@@ -1,6 +1,9 @@
 export default [
   {
     slug: "Monifactory-0.14",
+    pack: "Monifactory",
+    version: "0.14.Pre",
+    mode: "Normal",
     repo: "ThePansmith/Monifactory",
     branch: "main",
     title: "Monifactory 0.14 (Prerelease)",
@@ -24,8 +27,13 @@ export default [
   },
   {
     slug: "Monifactory",
+    pack: "Monifactory",
+    version: "0.13.8",
+    mode: "Normal",
+    default: true,
     repo: "ThePansmith/Monifactory",
     branch: "main",
+    commit: "db2a4fa3c62652b245dd5353fa959b41af498a86",
     questsPaths: [
       "config/ftbquests/quests",
       "config-overrides/normal/ftbquests/quests",
@@ -53,8 +61,12 @@ export default [
   },
   {
     slug: "Monifactory-Hard",
+    pack: "Monifactory",
+    version: "0.13.8",
+    mode: "Hard",
     repo: "ThePansmith/Monifactory",
     branch: "main",
+    commit: "db2a4fa3c62652b245dd5353fa959b41af498a86",
     title: "Monifactory (Hard)",
     questsPaths: [
       "config/ftbquests/quests",
@@ -80,8 +92,12 @@ export default [
   },
   {
     slug: "Monifactory-Expert",
+    pack: "Monifactory",
+    version: "0.13.8",
+    mode: "Expert",
     repo: "ThePansmith/Monifactory",
     branch: "main",
+    commit: "db2a4fa3c62652b245dd5353fa959b41af498a86",
     title: "Monifactory (Expert)",
     questsPaths: [
       "config/ftbquests/quests",
