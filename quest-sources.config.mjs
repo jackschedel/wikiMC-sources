@@ -1,5 +1,28 @@
 export default [
   {
+    slug: "Monifactory-0.14",
+    repo: "ThePansmith/Monifactory",
+    branch: "main",
+    title: "Monifactory 0.14 (Prerelease)",
+    questsPaths: [
+      "config/ftbquests/quests",
+      "config-overrides/normal/ftbquests/quests",
+    ],
+    langDirs: ["kubejs/assets/ftbquests/lang"],
+    enabledFeatures: [
+      "Boilers",
+      "Compacting",
+      "Converters",
+      "Fluxbore",
+      "HarderFluxBore",
+      "HatchRevert",
+      "HNN",
+      "LaserIO",
+      "Monicoins",
+      "Snad",
+    ],
+  },
+  {
     slug: "Monifactory",
     repo: "ThePansmith/Monifactory",
     branch: "main",
